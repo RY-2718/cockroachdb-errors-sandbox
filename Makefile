@@ -1,10 +1,10 @@
-.PHONY: run trace-error trace-library-error
+.PHONY: run curl-trace-error curl-trace-library-error
 
 run:
 	go run cmd/main.go
 
-trace-error:
+curl-trace-error:
 	curl http://localhost:8888/trace-error
 
-trace-library-error:
+curl-trace-library-error:
 	curl http://localhost:8888/trace-library-error
