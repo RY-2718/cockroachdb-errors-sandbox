@@ -5,7 +5,7 @@ The `cockroachdb/errors` package can be used as a replacement for [github.com/pk
 
 This repository provides an example to demonstrate how to use `cockroachdb/errors` and how errors are displayed using this library.
 
-For more information about cockroachdb/errors, please refer to the library's official page.
+For more information about cockroachdb/errors, please refer to the library's official page ([GitHub](https://github.com/cockroachdb/errors) or [pkg.go.dev](https://pkg.go.dev/github.com/cockroachdb/errors)).
 
 ## Requirements
 
@@ -19,6 +19,8 @@ This project has the following samples.
 * **vanilla**: A sample that does not use cockroachdb/errors. If you want to see how errors are printed without cockroachdb/errors, run this sample.
 * **simple**: A sample that demonstrates cockroachdb/errors in a straightforward manner. In most scenarios, this approach should be sufficient to add context to the error.
 * **redundant**: A sample that demonstrates the redundant use of cockroachdb/errors. This approach is not recommended as it leads to the repeated printing of the stacktrace.
+* **message**: A sample that demonstrates how to add messages to errors using cockroachdb/errors appropreately. It shows how to enhance error information without adding a repeated stacktrace.
+
 
 ## What is Implemented
 
@@ -215,4 +217,67 @@ Wraps: (5) Get "http://invalid-url"
 Wraps: (6) dial tcp
 Wraps: (7) lookup invalid-url: no such host
 Error types: (1) *withstack.withStack (2) *errutil.withPrefix (3) *withstack.withStack (4) *errutil.withPrefix (5) *url.Error (6) *net.OpError (7) *net.DNSError
+```
+
+### message
+
+In the `message` sample, you can expect to see the following output.  
+This sample demonstrates how to add messages to errors using cockroachdb/errors appropriately.
+
+In this sample, `errors.WithMessage()` is used instead of `errors.Wrap()` to add a message to errors.  
+`errors.WithMessage()` is useful to add messages to errors without including a stacktrace, in contrast to `errors.Wrap()`.  
+When using `errors.WithMessage()`, additional messages are displayed above the stacktrace, as shown below.
+
+Please note that you should use `errors.Wrap()` instead of `errors.WithMessage()` when handling library-generated errors.  
+In other words, to display a stacktrace, you must call either `errors.New()` or `errors.Wrap()` exactly once, and then use `errors.WithMessage()` for any subsequent message additions.
+
+```bash
+2023/08/22 16:09:39 error: this is an error from ExternalFunc: this is an error from internalFunc
+(1) this is an error from ExternalFunc
+Wraps: (2) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model.internalFunc
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model/errorgenerator.go:17
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model.ExternalFunc
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model/errorgenerator.go:10
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/handler.TraceErrorHandler
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/handler/traceerror.go:11
+  | net/http.HandlerFunc.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2136
+  | net/http.(*ServeMux).ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2514
+  | net/http.serverHandler.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2938
+  | net/http.(*conn).serve
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2009
+  | runtime.goexit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/asm_arm64.s:1197
+Wraps: (3) this is an error from internalFunc
+Error types: (1) *errutil.withPrefix (2) *withstack.withStack (3) *errutil.leafError
+
+2023/08/22 16:09:39 error: this is an error from WrapCallInvalidHTTPRequest: failed to call invalid HTTP request: Get "http://invalid-url": dial tcp: lookup invalid-url: no such host
+(1) this is an error from WrapCallInvalidHTTPRequest
+Wraps: (2) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model.callInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model/errorgenerator.go:29
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model.WrapCallInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/model/errorgenerator.go:21
+  | github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/handler.TraceLibraryErrorHandler
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/handler/traceerror.go:23
+  | net/http.HandlerFunc.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2136
+  | net/http.(*ServeMux).ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2514
+  | net/http.serverHandler.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2938
+  | net/http.(*conn).serve
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2009
+  | runtime.goexit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/asm_arm64.s:1197
+Wraps: (3) failed to call invalid HTTP request
+Wraps: (4) Get "http://invalid-url"
+Wraps: (5) dial tcp
+Wraps: (6) lookup invalid-url: no such host
+Error types: (1) *errutil.withPrefix (2) *withstack.withStack (3) *errutil.withPrefix (4) *url.Error (5) *net.OpError (6) *net.DNSError
 ```
