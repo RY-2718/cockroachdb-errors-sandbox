@@ -18,6 +18,7 @@ This project has the following samples.
 
 * **vanilla**: A sample that does not use cockroachdb/errors. If you want to see how errors are printed without cockroachdb/errors, run this sample.
 * **simple**: A sample that demonstrates cockroachdb/errors in a straightforward manner. In most scenarios, this approach should be sufficient to add context to the error.
+* **redundant**: A sample that demonstrates the redundant use of cockroachdb/errors. This approach is not recommended as it leads to the repeated printing of the stacktrace.
 
 ## What is Implemented
 
@@ -143,4 +144,75 @@ Wraps: (3) Get "http://invalid-url"
 Wraps: (4) dial tcp
 Wraps: (5) lookup invalid-url: no such host
 Error types: (1) *withstack.withStack (2) *errutil.withPrefix (3) *url.Error (4) *net.OpError (5) *net.DNSError
+```
+
+### redundant
+
+In the `redundant` sample, you can expect to see the following output.  
+This sample demonstrates the redundant use of cockroachdb/errors.
+
+In both implementations for the 2 type of errors, the error is wrapped using `errors.Wrap()` each time the error is passed to a different function.  
+Multiple calls of `errors.Wrap()` leads to the repeated printing of the stacktrace, because each call of `errors.Wrap()` adds a new stacktrace to the error.  
+As shown, the repeated stacktrace is omitted when the error is printed, but unnecessary lines are still included.  
+Therefore, calling `errors.Wrap()` multiple times is generally not recommended.
+
+```bash
+2023/08/22 15:37:56 error: this is an error from ExternalFunc: this is an error from internalFunc
+(1) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.ExternalFunc
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:11
+  | [...repeated from below...]
+Wraps: (2) this is an error from ExternalFunc
+Wraps: (3) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.internalFunc
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:17
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.ExternalFunc
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:10
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/handler.TraceErrorHandler
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/handler/traceerror.go:11
+  | net/http.HandlerFunc.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2136
+  | net/http.(*ServeMux).ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2514
+  | net/http.serverHandler.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2938
+  | net/http.(*conn).serve
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2009
+  | runtime.goexit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/asm_arm64.s:1197
+Wraps: (4) this is an error from internalFunc
+Error types: (1) *withstack.withStack (2) *errutil.withPrefix (3) *withstack.withStack (4) *errutil.leafError
+
+2023/08/22 15:37:56 error: this is an error from WrapCallInvalidHTTPRequest: failed to call invalid HTTP request: Get "http://invalid-url": dial tcp: lookup invalid-url: no such host
+(1) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.WrapCallInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:22
+  | [...repeated from below...]
+Wraps: (2) this is an error from WrapCallInvalidHTTPRequest
+Wraps: (3) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.callInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:29
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model.WrapCallInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/model/errorgenerator.go:21
+  | github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/handler.TraceLibraryErrorHandler
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/handler/traceerror.go:23
+  | net/http.HandlerFunc.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2136
+  | net/http.(*ServeMux).ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2514
+  | net/http.serverHandler.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2938
+  | net/http.(*conn).serve
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2009
+  | runtime.goexit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/asm_arm64.s:1197
+Wraps: (4) failed to call invalid HTTP request
+Wraps: (5) Get "http://invalid-url"
+Wraps: (6) dial tcp
+Wraps: (7) lookup invalid-url: no such host
+Error types: (1) *withstack.withStack (2) *errutil.withPrefix (3) *withstack.withStack (4) *errutil.withPrefix (5) *url.Error (6) *net.OpError (7) *net.DNSError
 ```
