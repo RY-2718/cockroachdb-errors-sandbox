@@ -1,10 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/cockroachdb/errors"
 
 	"github.com/RY-2718/cockroachdb-errors-sandbox/message/pkg/handler"
 )

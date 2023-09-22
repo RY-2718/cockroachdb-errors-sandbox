@@ -7,7 +7,7 @@ import (
 
 	"github.com/cockroachdb/errors"
 
-	"github.com/RY-2718/cockroachdb-errors-sandbox/redundant/pkg/handler"
+	"github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/handler"
 )
 
 func main() {

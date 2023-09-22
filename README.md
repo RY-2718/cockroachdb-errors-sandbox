@@ -1,11 +1,11 @@
 # cockroarchdb-errors-sandbox
 
 This is a sandbox repository for testing [github.com/cockroachdb/errors](https://github.com/cockroachdb/errors).  
-The `cockroachdb/errors` package can be used as a replacement for [github.com/pkg/errors](https://github.com/pkg/errors) and Go's standard `errors` package.
+The `github.com/cockroachdb/errors` package can be used as a replacement for [github.com/pkg/errors](https://github.com/pkg/errors) and Go's standard `errors` package.
 
-This repository provides an example to demonstrate how to use `cockroachdb/errors` and how errors are displayed using this library.
+This repository provides an example to demonstrate how to use `github.com/cockroachdb/errors` and how errors are displayed using this library.
 
-For more information about cockroachdb/errors, please refer to the library's official page ([GitHub](https://github.com/cockroachdb/errors) or [pkg.go.dev](https://pkg.go.dev/github.com/cockroachdb/errors)).
+For more information about github.com/cockroachdb/errors, please refer to the library's official page ([GitHub](https://github.com/cockroachdb/errors) or [pkg.go.dev](https://pkg.go.dev/github.com/cockroachdb/errors)).
 
 ## Requirements
 
@@ -16,12 +16,12 @@ For more information about cockroachdb/errors, please refer to the library's off
 
 This project has the following samples.
 
-* **vanilla**: A sample that does not use cockroachdb/errors. If you want to see how errors are printed without cockroachdb/errors, run this sample.
-* **simple**: A sample that demonstrates cockroachdb/errors in a straightforward manner. In most scenarios, this approach should be sufficient to add context to the error.
+* **vanilla**: A sample that does not use github.com/cockroachdb/errors. If you want to see how errors are printed without github.com/cockroachdb/errors, run this sample.
+* **simple**: A sample that demonstrates github.com/cockroachdb/errors in a straightforward manner. In most scenarios, this approach should be sufficient to add context to the error.
 * **withstack**: A sample that demonstrates how to add a stacktrace to an error without including additional messages.
-* **redundant**: A sample that demonstrates the redundant use of cockroachdb/errors. This approach is not recommended as it leads to the repeated printing of the stacktrace.
-* **message**: A sample that demonstrates how to add messages to errors using cockroachdb/errors appropriately. It shows how to enhance error information without adding a repeated stacktrace.
-
+* **redundant**: A sample that demonstrates the redundant use of github.com/cockroachdb/errors. This approach is not recommended as it leads to the repeated printing of the stacktrace.
+* **message**: A sample that demonstrates how to add messages to errors using github.com/cockroachdb/errors appropriately. It shows how to enhance error information without adding a repeated stacktrace.
+* **join**: A sample that demonstrates `errors.Join` from github.com/cockroachdb/errors, which is compatible with Go's standard `errors` package.
 
 ## What is Implemented
 
@@ -90,9 +90,9 @@ This makes it difficult to understand the cause of the error solely from the err
 ### simple
 
 In the `simple` sample, you can expect to see the following output.  
-This sample demonstrates basic error handling with cockroachdb/errors.  
+This sample demonstrates basic error handling with github.com/cockroachdb/errors.  
 
-For application-generated errors, the only difference from `vanilla` example in the implementation is that the error is generated using `errors.New()`, provided by cockroachdb/errors provides, rather than Go's standard `errors` package.  
+For application-generated errors, the only difference from `vanilla` example in the implementation is that the error is generated using `errors.New()`, provided by github.com/cockroachdb/errors provides, rather than Go's standard `errors` package.  
 With this slight change, the error message is displayed alongside the stack trace, allowing us to understand the context of the cause of the error.
 
 ```bash
@@ -119,7 +119,7 @@ Wraps: (2) this is an error from internalFunc
 Error types: (1) *withstack.withStack (2) *errutil.leafError
 ```
 
-For library-generated errors, the error is wrapped using `errors.Wrap()`, provided by cockroachdb/errors, at the point where library-generated error occurs.  
+For library-generated errors, the error is wrapped using `errors.Wrap()`, provided by github.com/cockroachdb/errors, at the point where library-generated error occurs.  
 With this change, additional information is added to the error likewise the application-generated error.
 
 ```bash
@@ -188,7 +188,7 @@ Error types: (1) *withstack.withStack (2) *url.Error (3) *net.OpError (4) *net.D
 ### redundant
 
 In the `redundant` sample, you can expect to see the following output.  
-This sample demonstrates the redundant use of cockroachdb/errors.
+This sample demonstrates the redundant use of github.com/cockroachdb/errors.
 
 In both implementations for the 2 type of errors, the error is wrapped using `errors.Wrap()` each time the error is passed to a different function.  
 Multiple calls of `errors.Wrap()` leads to the repeated printing of the stacktrace, because each call of `errors.Wrap()` adds a new stacktrace to the error.  
@@ -259,7 +259,7 @@ Error types: (1) *withstack.withStack (2) *errutil.withPrefix (3) *withstack.wit
 ### message
 
 In the `message` sample, you can expect to see the following output.  
-This sample demonstrates how to add messages to errors using cockroachdb/errors appropriately.
+This sample demonstrates how to add messages to errors using github.com/cockroachdb/errors appropriately.
 
 In this sample, `errors.WithMessage()` is used instead of `errors.Wrap()` to add a message to errors.  
 `errors.WithMessage()` is useful to add messages to errors without including a stacktrace, in contrast to `errors.Wrap()`.  
@@ -317,4 +317,54 @@ Wraps: (4) Get "http://invalid-url"
 Wraps: (5) dial tcp
 Wraps: (6) lookup invalid-url: no such host
 Error types: (1) *errutil.withPrefix (2) *withstack.withStack (3) *errutil.withPrefix (4) *url.Error (5) *net.OpError (6) *net.DNSError
+```
+
+### join
+
+In the `join` sample, you can expect to see the following output.  
+This sample demonstrates how to use `errors.Join` from github.com/cockroachdb/errors and how the errors are presented using this library.
+
+In this sample, `errors.Join()` is employed to consolidate multiple errors into a single error at the point where library-generated error occurs.  
+The resulting error can be evaluated using `errors.Is(err, target)`, enabling us to determine the type or types of the encompassed errors.
+
+When leveraging `errors.Join()`, the stacktrace diverges at the point of error aggregation.  
+The divergence is displayed intuitively, resembling the output of the `tree` command.
+
+```bash
+2023/09/22 18:49:35 errors.Is(err, model.ExternalError) = true
+2023/09/22 18:49:35 error: Get "http://invalid-url": dial tcp: lookup invalid-url: no such host
+(1) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model.callInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model/errorgenerator.go:31
+  | github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model.WrapCallInvalidHTTPRequest
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model/errorgenerator.go:23
+  | github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/handler.TraceLibraryErrorHandler
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/handler/traceerror.go:26
+  | net/http.HandlerFunc.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2136
+  | net/http.(*ServeMux).ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2514
+  | net/http.serverHandler.ServeHTTP
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/net/http/server.go:2938
+  | [...repeated from below...]
+Wraps: (2) Get "http://invalid-url": dial tcp: lookup invalid-url: no such host
+  | this is external error
+└─ Wraps: (3) attached stack trace
+  -- stack trace:
+  | github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model.init
+  |     /Users/yoshitani.ryo.10456/ghq/github.com/RY-2718/cockroachdb-errors-sandbox/join/pkg/model/errorgenerator.go:9
+  | runtime.doInit1
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/proc.go:6740
+  | runtime.doInit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/proc.go:6707
+  | runtime.main
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/proc.go:249
+  | runtime.goexit
+  |     /opt/homebrew/Cellar/go/1.21.0/libexec/src/runtime/asm_arm64.s:1197
+  └─ Wraps: (4) this is external error
+└─ Wraps: (5) Get "http://invalid-url"
+  └─ Wraps: (6) dial tcp
+    └─ Wraps: (7) lookup invalid-url: no such host
+Error types: (1) *withstack.withStack (2) *join.joinError (3) *withstack.withStack (4) *errutil.leafError (5) *url.Error (6) *net.OpError (7) *net.DNSError
 ```
